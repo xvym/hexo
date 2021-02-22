@@ -1,0 +1,33 @@
+---
+title: springboot启动流程解析
+date: 2021-02-10 11:46:16
+tags:
+---
+好好啃一下这块硬骨头
+<!--more-->
+本文使用的springboot版本为2.4.1、JDK8版本
+main方法调用SpringApplication.run静态方法，并注入main方法所在的启动引导类Application.class
+![main方法](https://pcsdata.baidu.com/thumbnail/082ea19aeh5bc47accf9db9c53198f2a?fid=2871246555-16051585-18821093302046&rt=pr&sign=FDTAER-yUdy3dSFZ0SVxtzShv1zcMqd-PR6%2FALWivvIkq3KjoYWx69p74oI%3D&expires=2h&chkv=0&chkbd=0&chkpc=&dp-logid=4093339354&dp-callid=0&time=1613055600&size=c1600_u1600&quality=100&vuk=-&ft=video)
+
+构造SpringApplication对象，并将引导类传入其构造方法（图2）
+
+进入SpringApplication的构造方法（图3）
+
+构造方法有两个参数，resourceLoader和primarySources，前者目前置空，后者暂时还没见过有传多个引导类的情况
+
+然后开始进行spring应用的资源初始化
+WebApplicationType.deduceFromClasspath()方法通过ClassUtils.isPresent方法判断当前ClassLoader中是否存在相应的类来决定应该初始化哪种类型的应用
+
+此外，我们比较需要关注的是getSpringFactoriesInstances方法，后面的ApplicationContextInitializer和ApplicationListener都是通过该方法进行加载的。
+initializers、listeners和bootstrappers都是在此处进行赋值，便于后续spring容器刷新时对相应的对象做处理（回调）。
+getSpringFactoriesInstances方法会调起SpringFactoriesLoader.loadFactoryNames()方法，最终调用loadSpringFactories()方法，这个方法是Spring提供的SPI机制的实现。loadSpringFactories()方法会获取当前ClassLoader所处理的路径下所有META-INF/spring.factories文件的配置信息。这里取到的ClassLoader是ApplicationClassLoader，会加载用户类路径上的类库。那用户路径又是什么？这个就是JVM的类加载机制的相关知识了，具体可以参考这篇文章（这里链接一下JVM类加载机制）。
+总之，就是将java类库和我们依赖的三方类库的路径下的META-INF/spring.factories文件的配置信息都加载进来。虽然spring虽然给我们开放了这些扩展点，实际上我们在开发业务时比较少运用到这些特性。
+在initializers、listeners和bootstrappers加载完后，其实里面基本都是spring内部的类。其中initializers、listeners在后续流程中还会发挥重要作用，后面会细说；而Bootstrapper这个类是在springboot2.4以后的版本引入的，并不是很清楚有什么卵用，官方文档中提示是用于在BootstrapRegistry初始化前提供一个回调接口（说实话没看懂），但可以看到我们的简单应用（我也不知道什么应用会加载）并没有加载Bootstrapper，这个类就暂且按下不表。
+（图initializers、listeners和bootstrappers）
+
+这一块我个人感觉有点让人迷糊，明明方法名叫做getSpringFactoriesInstances，但最终拿到的东西并不是一系列工厂实例集合。
+deduceMainApplicationClass()是用来记录引导类的信息的，具体有什么用也暂时不清楚
+
+至此，一个SpringApplication对象就构建完成了，接下来进入到它的run方法。在run方法中，有一些步骤我们没有必要去了解，这里我们只去关心有意义的步骤（比如设置显示器配置这种步骤我们直接略过就好）。
+
+第一个有意义的步骤是createBootstrapContext。这个方法是在将此前加载的bootstrappers遍历并执行每个bootstrapper的intitialize方法，并将ConfigurableBootstrapContext接口的默认实现类DefaultBootstrapContext注册到所有的bootstrapper中。但是明明是bootstrapper，遍历时又命名叫initializer，很容易和此前提到的另一个initializer混淆，不是很能理解spring团队为什么要这么命名。
