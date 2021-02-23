@@ -1,7 +1,11 @@
 ---
 title: springboot启动流程源码解析
-date: 2021-02-10 11:46:16
+date: 2021-02-23 11:46:16
 tags:
+- Java
+- spring
+- springboot
+categories: article
 ---
 好好啃一下这块硬骨头
 <!--more-->
@@ -38,12 +42,11 @@ getRunListeners方法还是Spring提供的一个SPI扩展点，在底层还是�
 这里一般也不会有太多扩展，可以看到这里只加载了一个EventPublishRunListener，用于进行Spring应用启动的时间发布。
 ![图6-EventPublishingRunListener-1](https://xvym.gitee.io/static/springboot/图6-EventPublishingRunListener-1.png)
 然后是下面这个starting方法。这里必须得吐槽一下，在2.4.x版本，springboot有很多代码在2.4.0版本后这个方法完全用lamda表达式重写了一遍，不得不说可读性是真的一般。这些改动主要是为了增加SpringCloud的相关支持，和一般的springboot应用启动流程起始并不是很相关。最开始我看的是2.4.2版本的代码，属实难顶，这也是为什么在前言中建议只想学习springboot启动流程的话可以去看2.3.x的代码。
-|2.3.x|2.4.x|
-|  ----  |  ----  |
-|![图7-2.3.x](https://xvym.gitee.io/static/springboot/图7-2.3.x.bmp)|![图8-2.4.x](https://xvym.gitee.io/static/springboot/图8-2.4.x.bmp)|
+![图7-2.3.x](https://xvym.gitee.io/static/springboot/图7-2.3.x.bmp)
+![图8-2.4.x](https://xvym.gitee.io/static/springboot/图8-2.4.x.bmp)
 
 starting方法很简单，就是将所有listener遍历并进行事件发布。由于一般SpringApplicationRunListener的实现类只有EventPublishingRunListener，所以我们可以进一步查看这个类的代码。
-![图9-EventPublishingRunListener-2](https://xvym.gitee.io/static/springboot/EventPublishingRunListener.bmp)
+![图9-EventPublishingRunListener-2](https://xvym.gitee.io/static/springboot/图9-EventPublishingRunListener-2.png)
 EventPublishingRunListener会构造一个SimpleApplicationEventMulticaster事件广播器，并将SpringApplication对象在构造方法中加载的Listener缓存在广播器中，并在starting方法会广播一个ApplicationStartingEvent，剩下的就是将事件广播给在onApplication方法中监听了这个事件的监听器了。详细步骤可以去阅读SimpleApplicationEventMulticaster的代码。所以如果我们要对spring启动监听器进行扩展，只需要按上面提到的SpringSPI方式将监听器注册到SpringApplication对象中（注意，不是容器哦，Spring容器到目前为止还没有进行创建），就可以对这些扩展点时间进行监听并执行相应的操作了。
 
 接下来是进行配置环境的加载，就是根据一定的优先级去进行各个配置源的信息读取。各个步骤底层会涉及非常多的读取解析逻辑，但是这些步骤Springboot除了扩展点外和Spring并没有太大区别，我们就不深入到底层代码中去探索了，可以简略的看下关键步骤做的事情。
