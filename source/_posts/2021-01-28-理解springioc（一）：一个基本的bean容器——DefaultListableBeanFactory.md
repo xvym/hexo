@@ -6,17 +6,18 @@ tags:
 - spring
 categories: article
 ---
-# 前言
-BeanFactory是Spring中最核心的接口。它为我们定义了从容器中获取bean的方法。如果说容器是一件房子，那么BeanFactory就是我们进入这间房子的大门。
+### 前言
+BeanFactory是Spring中最核心的接口。它为我们定义了从容器中获取bean的方法。如果说容器是一间房子，那么BeanFactory就是我们进入这间房子的大门。而DefaultListableBeanFactory就是一个默认的、最常用的BeanFactory实现类，本文我们就通过DefaultListableBeanFactory来一窥spring容器的奥秘。
+<!--more-->
 # DefaultListableBeanFactory
 DefaultListableBeanFactory位于org.springframework.beans.factory.support包下  
-DefaultListableBeanFactory是一个最常用的能真正实例化bean的一个BeanFactory实现类，同时实现了BeanDefinitionRegistry和BeanFactory接口。我们可以通过了解DefaultListableBeanFactory的工作原理来理解一个bean是怎么被加载的。
+DefaultListableBeanFactory是一个最基本的能真正实例化bean的一个BeanFactory实现类，同时实现了BeanDefinitionRegistry和BeanFactory接口。我们可以通过了解DefaultListableBeanFactory的工作原理来理解一个bean是怎么被加载的。
 
 DefaultListableBeanFactory的类关系图如下
 ![DefaultListableBeanFactory的类关系图](https://xvym.gitee.io/static/理解springioc/图1-DefaultListableBeanFactory的类关系图.png)
 其中处于顶层的类关系有这么几个：
 ### 1. 获取bean的门面接口：实现BeanFactory接口  
-BeanFacatory位于org.springframework.beans.factory包下。它是顶层的IOC容器接口，所有IOC容器的实现均需要实现该接口。它是获取bean的门面接口，容器的使用者通过该接口来获取Bean或是获取Bean的关键信息。
+BeanFacatory位于org.springframework.beans.factory包下。它是顶层的ioc容器接口，所有ioc容器的实现均需要实现该接口。它是获取bean的门面接口，容器的使用者通过该接口来获取bean或是获取bean的关键信息。
 <details>
 <summary>BeanFactory接口方法</summary>
 
@@ -60,8 +61,7 @@ public interface BeanFactory {
 }
 ```
 </details>
-BeanFactory的方法不难理解，定义的大多是获取Bean实例或是Bean的相关信息的方法。FACTORY_BEAN_PREFIX则是用来标记要获取的是FactoryBean而非FactoryBean生产的Bean
-
+BeanFactory的方法不难理解，定义的大多是获取bean实例或是bean的相关信息的方法。FACTORY_BEAN_PREFIX则是用来标记要获取的是FactoryBean而非FactoryBean生产的bean。由于BeanFactory的具体实现方法还涉及到Spring的其他扩展功能，在此我们先抽象的感受一下BeanFactory的方法即可。
 
 ### 2. 注册bean元信息：实现BeanDefinitionRegistry接口
 BeanDefinitionRegistry位于org.springframework.beans.factory.support包下。我们可以看下它定义的方法
@@ -102,7 +102,7 @@ public interface BeanDefinitionRegistry extends AliasRegistry {
 /** Map of bean definition objects, keyed by bean name. */
 private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
 ```
-
+同样，BeanDefinition还有很多不同的实现类，扩展了很多注册BeanDefinition的方法，在此我们依然是先抽象地感受一下这个类的方法即可。
 
 ### 3. 单例bean的注册中心：实现SingletonBeanRegistry接口  
 SingletonBeanRegistry位于org.springframework.beans.factory.config包下。它是单例Bean的注册中心。与BeanDefinitionRegistry不同，BeanDefinitionRegistry用于注册元信息（BeanDefinition），而SingletonBeanRegistry则是真正向容器中注册一个单例的bean。当我们从容器中获取单例bean时，底层就是使用SingletonBeanRegistry来获取单例bean。
@@ -133,7 +133,7 @@ public interface SingletonBeanRegistry {
 ```
 </details>
 
-这里有两个方法比较关键，注册单例bean的方法```void registerSingleton(String beanName, Object singletonObject)```和获取单例bean的方法```Object getSingleton(String beanName)```。Spring在启动过程中会使用三个map（亦被称之为三级缓存）来进行bean的存储
+这里有两个方法比较关键，注册单例bean的方法```void registerSingleton(String beanName, Object singletonObject)```和获取单例bean的方法```Object getSingleton(String beanName)```。Spring在启动过程中会使用三个map（亦被称之为三级缓存）来进行bean的存储。
 ```java
 /** Cache of singleton objects: bean name to bean instance. */
 // 一级缓存，以bean的名字为key，bean实例为value
@@ -144,10 +144,10 @@ private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256
 private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
 /** Cache of early singleton objects: bean name to bean instance. */
-// 二级缓存，以bean的名字为key，早期bean实例为value（早期bean是未构建完全的bean，实际上是不太可用的，只是用来解决循环依赖的问题）
+// 二级缓存，以bean的名字为key，早期bean实例为value（早期bean是未构建完全的bean，实际上是不可用的，只是用来解决循环依赖的问题）
 private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
 ```
-这里我们可以发散一下，先来看一下SingletonBeanRegistry最常用的实现类DefaultSingletonBeanRegistry是如何实现这两个方法的。
+这里我们可以稍微发散一下，先来看一下SingletonBeanRegistry最常用的实现类DefaultSingletonBeanRegistry是如何实现这两个方法的。
     
 <details>
 <summary>3.1 registerSingleton</summary>
@@ -170,7 +170,7 @@ public void registerSingleton(String beanName, Object singletonObject) throws Il
 
 protected void addSingleton(String beanName, Object singletonObject) {
     synchronized (this.singletonObjects) {
-        // 将bean存储到缓存中
+        // 无论二、三级缓存是否存在bean，都会将其清空，并升级到一级缓存中，同时beanName添加到已注册列表中
         this.singletonObjects.put(beanName, singletonObject);
         this.singletonFactories.remove(beanName);
         this.earlySingletonObjects.remove(beanName);
@@ -219,13 +219,13 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 }
 ```
 </details>
-当然，我们一般不会直接调用这两个接口来进行单例bean的注册和获取，但是在spring中单例bean的注册和获取最终还是会回到这两个方法上，所以我们对这两个方法的学习还是有必要的。
+当然，我们一般不会直接调用这两个接口来进行单例bean的注册和获取，但是在spring中单例bean的注册和获取（BeanFactory的getBean方法）最终还是会回到这两个方法上，所以我们对这两个方法的学习还是有必要的。
 
 ### 4. 其他：bean的别名管理类：继承SimpleAliasRegistry -> 实现AliasRegistry接口；支持序列化：实现Serializable序列化接口
 
 第四4相对来说没有那么重要，此处先跳过。如果一个容器实现了BeanDefinitionRegistry、BeanFactory、SingletonBeanRegistry，那么就已经具备了一个容器的必要的功能了。我们是可以直接使用DefaultListableBeanFactory来实现一个bean的注册和获取的。
 
-### bean容器实战
+# bean容器实战
 定义一个实体类
 ```java
 public class MyBean {
@@ -254,7 +254,7 @@ public class BootStrap {
         // 在容器中注册BeanDefiniton
         beanFactory.registerBeanDefinition("myBean", beanDefinition);
         // 获取并调用bean的方法
-        MyBean myBean = (MyBeanA) beanFactory.getBean("myBean");
+        MyBean myBean = (MyBean) beanFactory.getBean("myBean");
         myBean.test();
     }
 }
@@ -271,5 +271,5 @@ public class BootStrap {
 23:17:33.609 [main] DEBUG org.springframework.beans.factory.support.DefaultListableBeanFactory - Creating shared instance of singleton bean 'myBean'
 23:17:33.610 [main] INFO cn.com.xvym.learning.springbootlearning.MyBean - myBean is testing!
 ```
-这就是一个最基本的bean的注册和获取过程。当然，我们常用的bean注册方式肯定不会这么繁琐，spring通过很多另外的接口扩展功能为我们实现了更为方便的bean注册和获取方式和很多bean的增强功能，但是底层最终还是会调用到这几个基本的方法，这些我们可以在后面再持续进行探讨。
+这就是一个最基本的bean的注册和获取过程。当然，我们常用的bean注册方式肯定不会是这么繁琐的，spring通过很多另外的接口扩展功能为我们实现了更为方便的bean注册和获取方式和很多bean的增强功能，但是底层最终还是会调用到这几个基本的方法，这些我们可以在后面再持续进行探讨。
 
