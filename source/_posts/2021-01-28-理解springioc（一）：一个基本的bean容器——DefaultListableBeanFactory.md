@@ -14,7 +14,7 @@ DefaultListableBeanFactory位于org.springframework.beans.factory.support包下
 DefaultListableBeanFactory是一个最基本的能真正实例化bean的一个BeanFactory实现类，同时实现了BeanDefinitionRegistry和BeanFactory接口。我们可以通过了解DefaultListableBeanFactory的工作原理来理解一个bean是怎么被加载的。注意，本文首先是通过一个全局的视角来抽象地认识一个bean容器，并不会去深入研究具体的实现原理，所以下文我们都是直接从接口的定义来认识bean容器，而不会探究其实现原理。
 
 DefaultListableBeanFactory的类关系图如下
-![DefaultListableBeanFactory的类关系图](https://xvym.gitee.io/static/理解springioc/图1-DefaultListableBeanFactory的类关系图.png)
+![DefaultListableBeanFactory的类关系图](https://xvym.gitee.io/static/理解springioc/一/图1-DefaultListableBeanFactory的类关系图.png)
 其中处于顶层的类关系有这么几个：
 ### 1. 获取bean的门面接口：实现BeanFactory接口  
 BeanFacatory位于org.springframework.beans.factory包下。它是顶层的ioc容器接口，所有ioc容器的实现均需要实现该接口。它是获取bean的门面接口，容器的使用者通过该接口来获取bean或是获取bean的关键信息。

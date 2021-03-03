@@ -1,6 +1,6 @@
 ---
 title: 2021-01-30-理解springioc（二）：认识spring的高级容器
-date: 2021-03-03 23:03:55
+date: 2021-01-30 23:03:55
 tags:
 - Java
 - spring
@@ -10,12 +10,13 @@ categories: article
 在[《理解springioc（一）：一个基本的bean容器——DefaultListableBeanFactory》](https://xvym.com.cn/2021/01/28/2021-01-28-%E7%90%86%E8%A7%A3springioc%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E4%B8%80%E4%B8%AA%E5%9F%BA%E6%9C%AC%E7%9A%84bean%E5%AE%B9%E5%99%A8%E2%80%94%E2%80%94DefaultListableBeanFactory/#more)一文中，我们初步认识了一个关键的基础容器——DefaultListableBeanFactory，而spring中的高级容器往往都会使用DefaultListableBeanFactory来作为BeanFactory。在本文中，我们就来更逐步地探讨一下spring中的高级容器。
 <!--more-->
 ## ApplicationContext
-![图1-ApplicationContext的类图]()
+![图1-ApplicationContext的类图](https://xvym.gitee.io/static/理解springioc/二/图1-ApplicationContext的类图.png)
 ApplicationContext是BeanFactory的一个扩展，该接口除了拥有BeanFactory的所有功能外，还具有以下扩展：
 1. 继承MessageSource，用于支撑国际化功能
 2. 继承ApplicationEventPublisher，提供Spring的事件机制
 3. 继承ResourceLoader，用于加载资源文件 
 4. 继承EnvironmentCapable，用于获取Environment对象进而支持多环境配置
+
 在ApplicationContext中新定义了以下的方法
 <details>
 <summary>ApplicationContext接口方法</summary>
@@ -51,11 +52,11 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 可以看到，这些方法只定义了对ApplicationContext一些信息获取的方法，其功能扩展是通过集成更多的接口来达成的。
 
 比较ApplicationContext和DefaultListableBeanFactory的类图，我们可以看到ApplicationContext并没有去实现SingletonBeanRegistry和BeanDefinitionRegistry等接口，这与我们在上一篇文章中认为的容器应该实现这些接口有出入。我们可以带着这些疑问继续往下看。
-![图2-DefaultListableBeanFactory的类关系图](https://xvym.gitee.io/static/%E7%90%86%E8%A7%A3springioc/%E5%9B%BE1-DefaultListableBeanFactory%E7%9A%84%E7%B1%BB%E5%85%B3%E7%B3%BB%E5%9B%BE.png)
+![图2-DefaultListableBeanFactory的类关系图](https://xvym.gitee.io/static/理解springioc/一/图1-DefaultListableBeanFactory的类关系图.png)
 
 ### ConfigurableApplicationContext、WebApplicationContext和ConfigurableWebApplicationContext
 ApplicationContext接口有两个直接子接口，ConfigurableApplicationContext和WebApplicationContext，在此之上，还有一个继承了这两个子接口的ConfigurableWebApplicationContext。我们可以通过ConfigurableWebApplicationContext的类图来了解这些接口的联系
-![图3-ConfigurableWebApplicationContext的类图]()
+![图3-ConfigurableWebApplicationContext的类图](https://xvym.gitee.io/static/理解springioc/二/图3-ConfigurableWebApplicationContext的类图.png)
 我们可以直接看下这三个类的代码
 #### 1. ConfigurableApplicationContext接口  
 相较于Application，ConfigurableApplicationContext接口又多了以下的扩展：
