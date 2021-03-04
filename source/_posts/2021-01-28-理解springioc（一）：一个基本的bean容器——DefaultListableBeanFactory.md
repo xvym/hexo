@@ -8,6 +8,8 @@ categories: article
 ---
 ### 前言
 spring源码的学习始终是Java开发迈不过去的坎，springioc更是spring精华中的精华。无奈spring版本众多，资料庞杂，也缺少一本相对来说权威的源码解读书籍，多次阅读源码都是卡在半路，不得门道。遂决定从spring底层开始逐步理解springioc，记下学习所悟并梳理成文。
+<!--more-->
+
 # BeanFactory
 BeanFactory是Spring中最核心的接口。它为我们定义了从容器中获取bean的方法。如果说springioc是一间房子，那么BeanFactory就是我们进入这间房子的大门，所有Spring容器都要实现BeanFactory接口。而DefaultListableBeanFactory就是一个默认的、最常用的BeanFactory实现类，我们可以通过DefaultListableBeanFactory来一窥spring容器的奥秘。
 
