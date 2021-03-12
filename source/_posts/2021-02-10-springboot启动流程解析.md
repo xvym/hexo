@@ -324,8 +324,10 @@ public void refresh() throws BeansException, IllegalStateException {
 		}
 	}
 	```
+4. postProcessBeanFactory(beanFactory);
+	spring中并没有定义
 
-4. invokeBeanFactoryPostProcessors(beanFactory)
+5. 	invokeBeanFactoryPostProcessors(beanFactory)
 	这一步是向beanFactory中实例化BeanFactoryPostProcessor。BeanFactoryPostProcessor是spring为我们提供的一个扩展点，允许我们在bean初始化前获得并修改bean的元信息。
 	```java
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
